@@ -1,12 +1,14 @@
 # MCP Development Agent
 
-Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) que oferece funcionalidades de memória, documentação e integração com Git, disponível tanto em modo CLI quanto como servidor SSE.
+Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) que oferece funcionalidades de memória, documentação e integração com Git/GitHub, disponível tanto em modo CLI quanto como servidor SSE.
 
 ## Funcionalidades
 
 - 🧠 **Sistema de Memória**: Armazena e recupera informações usando embeddings via ChromaDB
 - 📚 **Busca em Documentação**: Pesquisa em arquivos de documentação
 - 🔄 **Integração Git**: Consulta histórico de commits e issues
+- 🔍 **Análise de Código**: Análise estática de código usando tree-sitter
+- 🌐 **Integração GitHub**: Busca repositórios, issues e código no GitHub
 - 💻 **Interface CLI**: Interface de linha de comando interativa
 - 🌐 **Modo Servidor**: Suporte a Server-Sent Events (SSE)
 
@@ -16,6 +18,8 @@ Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) q
 - ChromaDB
 - GitPython
 - FastMCP
+- PyGithub
+- tree-sitter
 
 ## Instalação
 
@@ -29,7 +33,20 @@ cd mcp-dev-agent
 2. Instale as dependências:
 
 ```bash
-pip install chromadb GitPython fastmcp
+pip install -r requirements.txt
+```
+
+3. Configure as variáveis de ambiente (copie .env.example para .env):
+
+```bash
+cp .env.example .env
+# Edite .env com suas chaves de API
+```
+
+4. Configure os parsers de código:
+
+```bash
+python setup_parsers.py
 ```
 
 ## Uso
@@ -51,12 +68,19 @@ Comandos disponíveis:
 - `/memory repo add <conteúdo>` - Adiciona uma memória específica do repositório
 - `/memory repo get <consulta>` - Busca memórias específicas do repositório
 
-#### Git
+#### Git e GitHub
 
 - `/git commits [número]` - Mostra histórico de commits (padrão: 5 últimos)
-- `/git issues` - Lista issues do repositório
+- `/git issues` - Lista issues do repositório local
 - `/git info` - Mostra informações detalhadas do repositório
 - `/git diff` - Mostra alterações pendentes (staged e unstaged)
+- `/github repo <owner/repo>` - Mostra detalhes de um repositório no GitHub
+- `/github issues <owner/repo> [state]` - Lista issues do GitHub (state: open/closed)
+- `/github search <query> [language]` - Busca código no GitHub
+
+#### Análise de Código
+
+- `/code analyze <arquivo> [language]` - Analisa estrutura do código (funções, classes, imports)
 
 #### Documentação
 
@@ -65,21 +89,27 @@ Comandos disponíveis:
 
 ### Recursos Avançados
 
-#### Memória do Repositório
+#### Análise de Código
 
-O sistema mantém um histórico contextualizado das mudanças no repositório, incluindo:
+O sistema utiliza tree-sitter para analisar código em:
 
-- Estado atual do branch
-- Commits recentes
-- Alterações pendentes
-- Metadados do contexto
+- Python
+- JavaScript
+- TypeScript
 
-#### Integração Git
+A análise inclui:
 
-- Informações detalhadas do repositório (branch, remotes, status)
-- Visualização de diffs com contexto
-- Monitoramento automático de mudanças
-- Armazenamento inteligente do contexto
+- Extração de funções e métodos
+- Identificação de classes
+- Mapeamento de imports
+- Integração com memória para contexto
+
+#### Integração GitHub
+
+- Informações detalhadas de repositórios
+- Busca e listagem de issues
+- Busca de código com filtro por linguagem
+- Metadados enriquecidos
 
 #### Sistema de Memória Aprimorado
 
@@ -87,6 +117,7 @@ O sistema mantém um histórico contextualizado das mudanças no repositório, i
 - Metadados enriquecidos
 - Busca contextual
 - Histórico temporal
+- Integração com análise de código
 
 ### Modo Servidor (SSE)
 
@@ -103,39 +134,15 @@ O servidor SSE permite integração com outras aplicações através do protocol
 ```
 .
 ├── main.py              # Ponto de entrada da aplicação
+├── setup_parsers.py     # Configuração dos parsers de código
 ├── tools/
 │   ├── memory_tool.py   # Gerenciamento de memória via ChromaDB
 │   ├── doc_tool.py      # Busca em documentação
-│   └── git_tool.py      # Integração com Git
+│   ├── git_tool.py      # Integração com Git
+│   └── github_tool.py   # Integração com GitHub e análise de código
 └── docs/
     └── api_reference.md # Documentação de referência da API
 ```
-
-## Ferramentas
-
-### Memory Tool
-
-Utiliza ChromaDB para armazenar e recuperar informações com suporte a embeddings, permitindo buscas semânticas eficientes.
-
-### Doc Tool
-
-Permite buscar informações em arquivos de documentação, facilitando o acesso rápido a referências e guias.
-
-### Git Tool
-
-Oferece integração com Git para consulta de histórico de commits e issues (requer configuração adicional para GitHub/GitLab API).
-
-## Contribuindo
-
-1. Fork o projeto
-2. Crie sua feature branch (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -am 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Crie um Pull Request
-
-## Licença
-
-Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para detalhes.
 
 ## Configuração dos Modelos de IA
 

@@ -2,6 +2,7 @@ from mcp.server.fastmcp import FastMCP
 from tools.memory_tool import add_memory, get_memory, add_repo_memory, get_repo_memory
 from tools.doc_tool import search_docs
 from tools.git_tool import get_commit_history, get_issues, get_repo_info, get_diffs
+from tools.github_tool import get_repo_details, get_repository_issues, analyze_file_content, search_github_code
 import argparse
 import asyncio
 import json
@@ -52,11 +53,15 @@ mcp.add_tool(get_repo_memory)
 # Registro das ferramentas de documentação
 mcp.add_tool(search_docs)
 
-# Registro das ferramentas Git
+# Registro das ferramentas Git e GitHub
 mcp.add_tool(get_commit_history)
 mcp.add_tool(get_issues)
 mcp.add_tool(get_repo_info)
 mcp.add_tool(get_diffs)
+mcp.add_tool(get_repo_details)
+mcp.add_tool(get_repository_issues)
+mcp.add_tool(analyze_file_content)
+mcp.add_tool(search_github_code)
 
 async def cli_interaction():
     print("CLI Mode - Digite 'exit' para sair")
@@ -70,6 +75,10 @@ async def cli_interaction():
     print("  /git issues - Ver issues")
     print("  /git info - Ver informações do repositório")
     print("  /git diff - Ver alterações pendentes")
+    print("  /github repo <owner/repo> - Ver detalhes do repositório")
+    print("  /github issues <owner/repo> [state] - Listar issues (state: open/closed)")
+    print("  /github search <query> [language] - Buscar código no GitHub")
+    print("  /code analyze <arquivo> [language] - Analisar código")
     
     while True:
         try:
@@ -134,6 +143,43 @@ async def cli_interaction():
                         result = await get_repo_info()
                     elif parts[1] == 'diff':
                         result = await get_diffs()
+                
+                elif parts[0] == 'github':
+                    if len(parts) < 3:
+                        print("Uso: /github [repo|issues|search] <args>")
+                        continue
+                        
+                    if parts[1] == 'repo':
+                        result = await get_repo_details(parts[2])
+                    elif parts[1] == 'issues':
+                        state = parts[3] if len(parts) > 3 else 'open'
+                        result = await get_repository_issues(parts[2], state)
+                    elif parts[1] == 'search':
+                        query = ' '.join(parts[2:])
+                        language = None
+                        if ' in:' in query:
+                            query, language = query.split(' in:', 1)
+                        result = await search_github_code(query, language)
+                
+                elif parts[0] == 'code':
+                    if len(parts) < 3:
+                        print("Uso: /code analyze <arquivo> [language]")
+                        continue
+                        
+                    if parts[1] == 'analyze':
+                        try:
+                            with open(parts[2], 'r') as f:
+                                content = f.read()
+                            language = parts[3] if len(parts) > 3 else 'python'
+                            result = await analyze_file_content(content, language)
+                            
+                            # Salvar análise na memória
+                            await add_memory(
+                                f"Análise do arquivo {parts[2]}:\n{result}",
+                                context_type="code_analysis"
+                            )
+                        except Exception as e:
+                            result = f"Erro ao analisar arquivo: {str(e)}"
                 
                 else:
                     result = "Comando desconhecido"
