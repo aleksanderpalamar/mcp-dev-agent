@@ -1,19 +1,19 @@
 # MCP Development Agent
 
-Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) que oferece funcionalidades de memória, documentação e integração com Git/GitHub, disponível tanto em modo CLI quanto como servidor SSE.
+A development agent based on the Model Context Protocol (MCP) that provides memory management, documentation search, and Git/GitHub integration features, available both as a CLI tool and as an SSE server.
 
-## Funcionalidades
+## Features
 
-- 🧠 **Sistema de Memória**: Armazena e recupera informações usando embeddings via ChromaDB
-- 📚 **Busca em Documentação**: Pesquisa em arquivos de documentação
-- 🔄 **Integração Git**: Consulta histórico de commits e issues
-- 🔍 **Análise de Código**: Análise estática de código usando tree-sitter
-- 🌐 **Integração GitHub**: Busca repositórios, issues, pull requests, projetos e código
-- 💡 **IA Assistiva**: Resumo automático de issues usando GPT
-- 💻 **Interface CLI**: Interface de linha de comando interativa
-- 🌐 **Modo Servidor**: Suporte a Server-Sent Events (SSE)
+- 🧠 **Memory System**: Store and retrieve information using embeddings via ChromaDB
+- 📚 **Documentation Search**: Search through documentation files
+- 🔄 **Git Integration**: Query commit history and issues
+- 🔍 **Code Analysis**: Static code analysis using tree-sitter
+- 🌐 **GitHub Integration**: Search repositories, issues, pull requests, projects, and code
+- 💡 **AI Assistant**: Automatic issue summarization using GPT
+- 💻 **CLI Interface**: Interactive command-line interface
+- 🌐 **Server Mode**: Server-Sent Events (SSE) support
 
-## Requisitos
+## Requirements
 
 - Python 3.x
 - ChromaDB
@@ -23,162 +23,162 @@ Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) q
 - tree-sitter
 - openai
 
-## Instalação
+## Installation
 
-1. Clone o repositório:
+1. Clone the repository:
 
 ```bash
-git clone [url-do-repositorio]
+git clone [repository-url]
 cd mcp-dev-agent
 ```
 
-2. Instale as dependências:
+2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configure as variáveis de ambiente (copie .env.example para .env):
+3. Configure environment variables (copy .env.example to .env):
 
 ```bash
 cp .env.example .env
-# Edite .env com suas chaves de API:
+# Edit .env with your API keys:
 # - GITHUB_TOKEN
 # - OPENAI_API_KEY
 # - ANTHROPIC_API_KEY
 ```
 
-4. Configure os parsers de código:
+4. Set up code parsers:
 
 ```bash
 python setup_parsers.py
 ```
 
-## Uso
+## Usage
 
-O agente pode ser executado em dois modos:
+The agent can be run in two modes:
 
-### Modo CLI
+### CLI Mode
 
 ```bash
 python main.py --mode cli
 ```
 
-Comandos disponíveis:
+Available commands:
 
-#### Memória
+#### Memory
 
-- `/memory add <conteúdo>` - Adiciona uma nova memória geral
-- `/memory get <consulta>` - Busca memórias existentes
-- `/memory repo add <conteúdo>` - Adiciona uma memória específica do repositório
-- `/memory repo get <consulta>` - Busca memórias específicas do repositório
+- `/memory add <content>` - Add a new general memory
+- `/memory get <query>` - Search existing memories
+- `/memory repo add <content>` - Add a repository-specific memory
+- `/memory repo get <query>` - Search repository-specific memories
 
-#### Git e GitHub
+#### Git and GitHub
 
-- `/git commits [número]` - Mostra histórico de commits (padrão: 5 últimos)
-- `/git issues` - Lista issues do repositório local
-- `/git info` - Mostra informações detalhadas do repositório
-- `/git diff` - Mostra alterações pendentes (staged e unstaged)
-- `/github repo <owner/repo>` - Mostra detalhes de um repositório
-- `/github issues <owner/repo> [state]` - Lista issues (state: open/closed)
-- `/github prs <owner/repo> [state]` - Lista pull requests (state: open/closed)
-- `/github project <org> <number>` - Mostra informações do projeto
-- `/github summarize <owner/repo> <issue_number>` - Gera resumo de issue com GPT
-- `/github search <query> [language]` - Busca código no GitHub
+- `/git commits [number]` - Show commit history (default: last 5)
+- `/git issues` - List local repository issues
+- `/git info` - Show detailed repository information
+- `/git diff` - Show pending changes (staged and unstaged)
+- `/github repo <owner/repo>` - Show repository details
+- `/github issues <owner/repo> [state]` - List issues (state: open/closed)
+- `/github prs <owner/repo> [state]` - List pull requests (state: open/closed)
+- `/github project <org> <number>` - Show project information
+- `/github summarize <owner/repo> <issue_number>` - Generate issue summary using GPT
+- `/github search <query> [language]` - Search code on GitHub
 
-#### Análise de Código
+#### Code Analysis
 
-- `/code analyze <arquivo> [language]` - Analisa estrutura do código (funções, classes, imports)
+- `/code analyze <file> [language]` - Analyze code structure (functions, classes, imports)
 
-#### Documentação
+#### Documentation
 
-- `/docs <consulta>` - Pesquisa na documentação
-- `exit` - Sai do modo CLI
+- `/docs <query>` - Search documentation
+- `exit` - Exit CLI mode
 
-### Recursos Avançados
+### Advanced Features
 
-#### Análise de Código
+#### Code Analysis
 
-O sistema utiliza tree-sitter para analisar código em:
+The system uses tree-sitter to analyze code in:
 
 - Python
 - JavaScript
 - TypeScript
 
-A análise inclui:
+Analysis includes:
 
-- Extração de funções e métodos
-- Identificação de classes
-- Mapeamento de imports
-- Integração com memória para contexto
+- Function and method extraction
+- Class identification
+- Import mapping
+- Memory integration for context
 
-#### Integração GitHub
+#### GitHub Integration
 
-- Informações detalhadas de repositórios
-- Busca e listagem de issues
-- Gerenciamento de pull requests
-- Integração com GitHub Projects
-- Busca de código com filtro por linguagem
-- Metadados enriquecidos
-- Resumo automático de issues com GPT
+- Detailed repository information
+- Issue search and listing
+- Pull request management
+- GitHub Projects integration
+- Code search with language filtering
+- Enriched metadata
+- Automatic issue summarization with GPT
 
-#### Sistema de Memória Aprimorado
+#### Enhanced Memory System
 
-- Suporte a diferentes tipos de contexto
-- Metadados enriquecidos
-- Busca contextual
-- Histórico temporal
-- Integração com análise de código
-- Armazenamento automático de resumos
-- Contextualização com estado do Git
+- Support for different context types
+- Enriched metadata
+- Contextual search
+- Temporal history
+- Code analysis integration
+- Automatic summary storage
+- Git state contextualization
 
-### Modo Servidor (SSE)
+### Server Mode (SSE)
 
 ```bash
 python main.py
-# ou
+# or
 python main.py --mode server
 ```
 
-O servidor SSE permite integração com outras aplicações através do protocolo MCP.
+The SSE server enables integration with other applications through the MCP protocol.
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 .
-├── main.py              # Ponto de entrada da aplicação
-├── setup_parsers.py     # Configuração dos parsers de código
+├── main.py              # Application entry point
+├── setup_parsers.py     # Code parser configuration
 ├── tools/
-│   ├── memory_tool.py   # Gerenciamento de memória via ChromaDB
-│   ├── doc_tool.py      # Busca em documentação
-│   ├── git_tool.py      # Integração com Git
-│   └── github_tool.py   # Integração com GitHub e análise de código
+│   ├── memory_tool.py   # Memory management via ChromaDB
+│   ├── doc_tool.py      # Documentation search
+│   ├── git_tool.py      # Git integration
+│   └── github_tool.py   # GitHub integration and code analysis
 └── docs/
-    └── api_reference.md # Documentação de referência da API
+    └── api_reference.md # API reference documentation
 ```
 
-## Configuração dos Modelos de IA
+## AI Model Configuration
 
-O agente suporta integração com modelos de IA da Anthropic (Claude) e OpenAI (GPT-4 e GPT-3.5). Para usar esses modelos, você precisa:
+The agent supports integration with Anthropic (Claude) and OpenAI (GPT-4 and GPT-3.5) AI models. To use these models, you need to:
 
-1. Configurar as variáveis de ambiente:
+1. Set up environment variables:
 
 ```bash
-export ANTHROPIC_API_KEY="sua_chave_api_anthropic"
-export OPENAI_API_KEY="sua_chave_api_openai"
+export ANTHROPIC_API_KEY="your-anthropic-api-key"
+export OPENAI_API_KEY="your-openai-api-key"
 ```
 
-2. O arquivo `.agent.json` já está configurado com:
+2. The `.agent.json` file is already configured with:
 
-- Claude-3 Opus como modelo padrão
-- Suporte a GPT-4 Turbo e GPT-3.5 Turbo
-- Cache de respostas (24 horas)
-- Logging de interações
+- Claude-3 Opus as default model
+- GPT-4 Turbo and GPT-3.5 Turbo support
+- Response caching (24 hours)
+- Interaction logging
 
-### Parâmetros dos Modelos
+### Model Parameters
 
-Você pode ajustar os parâmetros dos modelos editando o arquivo `.agent.json`:
+You can adjust model parameters by editing the `.agent.json` file:
 
-- `temperature`: Controla a criatividade das respostas (0.0 a 1.0)
-- `max_tokens`: Limite máximo de tokens por resposta
-- `top_p`: Controla a diversidade das respostas
+- `temperature`: Controls response creativity (0.0 to 1.0)
+- `max_tokens`: Maximum tokens per response
+- `top_p`: Controls response diversity
