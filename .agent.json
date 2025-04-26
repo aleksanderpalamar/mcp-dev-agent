@@ -42,7 +42,11 @@
     },
     "security": {
         "use_env_variables": true,
-        "required_env_vars": ["ANTHROPIC_API_KEY", "OPENAI_API_KEY"]
+        "required_env_vars": [
+            "ANTHROPIC_API_KEY",
+            "OPENAI_API_KEY",
+            "GITHUB_TOKEN"
+        ]
     },
     "cache": {
         "enabled": true,

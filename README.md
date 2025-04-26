@@ -8,7 +8,8 @@ Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) q
 - 📚 **Busca em Documentação**: Pesquisa em arquivos de documentação
 - 🔄 **Integração Git**: Consulta histórico de commits e issues
 - 🔍 **Análise de Código**: Análise estática de código usando tree-sitter
-- 🌐 **Integração GitHub**: Busca repositórios, issues e código no GitHub
+- 🌐 **Integração GitHub**: Busca repositórios, issues, pull requests, projetos e código
+- 💡 **IA Assistiva**: Resumo automático de issues usando GPT
 - 💻 **Interface CLI**: Interface de linha de comando interativa
 - 🌐 **Modo Servidor**: Suporte a Server-Sent Events (SSE)
 
@@ -20,6 +21,7 @@ Um agente de desenvolvimento baseado no protocolo Model Context Protocol (MCP) q
 - FastMCP
 - PyGithub
 - tree-sitter
+- openai
 
 ## Instalação
 
@@ -40,7 +42,10 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edite .env com suas chaves de API
+# Edite .env com suas chaves de API:
+# - GITHUB_TOKEN
+# - OPENAI_API_KEY
+# - ANTHROPIC_API_KEY
 ```
 
 4. Configure os parsers de código:
@@ -74,8 +79,11 @@ Comandos disponíveis:
 - `/git issues` - Lista issues do repositório local
 - `/git info` - Mostra informações detalhadas do repositório
 - `/git diff` - Mostra alterações pendentes (staged e unstaged)
-- `/github repo <owner/repo>` - Mostra detalhes de um repositório no GitHub
-- `/github issues <owner/repo> [state]` - Lista issues do GitHub (state: open/closed)
+- `/github repo <owner/repo>` - Mostra detalhes de um repositório
+- `/github issues <owner/repo> [state]` - Lista issues (state: open/closed)
+- `/github prs <owner/repo> [state]` - Lista pull requests (state: open/closed)
+- `/github project <org> <number>` - Mostra informações do projeto
+- `/github summarize <owner/repo> <issue_number>` - Gera resumo de issue com GPT
 - `/github search <query> [language]` - Busca código no GitHub
 
 #### Análise de Código
@@ -108,8 +116,11 @@ A análise inclui:
 
 - Informações detalhadas de repositórios
 - Busca e listagem de issues
+- Gerenciamento de pull requests
+- Integração com GitHub Projects
 - Busca de código com filtro por linguagem
 - Metadados enriquecidos
+- Resumo automático de issues com GPT
 
 #### Sistema de Memória Aprimorado
 
@@ -118,6 +129,8 @@ A análise inclui:
 - Busca contextual
 - Histórico temporal
 - Integração com análise de código
+- Armazenamento automático de resumos
+- Contextualização com estado do Git
 
 ### Modo Servidor (SSE)
 

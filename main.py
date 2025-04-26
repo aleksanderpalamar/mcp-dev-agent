@@ -2,11 +2,15 @@ from mcp.server.fastmcp import FastMCP
 from tools.memory_tool import add_memory, get_memory, add_repo_memory, get_repo_memory
 from tools.doc_tool import search_docs
 from tools.git_tool import get_commit_history, get_issues, get_repo_info, get_diffs
-from tools.github_tool import get_repo_details, get_repository_issues, analyze_file_content, search_github_code
+from tools.github_tool import (
+    get_repo_details, get_repository_issues, analyze_file_content, search_github_code,
+    get_pull_requests, get_project_info, summarize_issue
+)
 import argparse
 import asyncio
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -44,6 +48,7 @@ logging.basicConfig(
 
 config = load_agent_config()
 mcp = FastMCP("pair_programming_agent", config=config)
+
 # Registro das ferramentas de memória
 mcp.add_tool(add_memory)
 mcp.add_tool(get_memory)
@@ -62,6 +67,9 @@ mcp.add_tool(get_repo_details)
 mcp.add_tool(get_repository_issues)
 mcp.add_tool(analyze_file_content)
 mcp.add_tool(search_github_code)
+mcp.add_tool(get_pull_requests)
+mcp.add_tool(get_project_info)
+mcp.add_tool(summarize_issue)
 
 async def cli_interaction():
     print("CLI Mode - Digite 'exit' para sair")
@@ -77,8 +85,10 @@ async def cli_interaction():
     print("  /git diff - Ver alterações pendentes")
     print("  /github repo <owner/repo> - Ver detalhes do repositório")
     print("  /github issues <owner/repo> [state] - Listar issues (state: open/closed)")
+    print("  /github prs <owner/repo> [state] - Listar pull requests (state: open/closed)")
+    print("  /github project <org> <number> - Ver informações do projeto")
+    print("  /github summarize <owner/repo> <issue_number> - Resumir uma issue")
     print("  /github search <query> [language] - Buscar código no GitHub")
-    print("  /code analyze <arquivo> [language] - Analisar código")
     
     while True:
         try:
@@ -91,7 +101,7 @@ async def cli_interaction():
                 parts = command[1:].split()
                 if not parts:
                     continue
-                    
+
                 if parts[0] == 'memory':
                     if len(parts) < 2:
                         print("Uso: /memory [add|get|repo] <conteúdo>")
@@ -146,7 +156,7 @@ async def cli_interaction():
                 
                 elif parts[0] == 'github':
                     if len(parts) < 3:
-                        print("Uso: /github [repo|issues|search] <args>")
+                        print("Uso: /github [repo|issues|prs|project|summarize|search] <args>")
                         continue
                         
                     if parts[1] == 'repo':
@@ -154,33 +164,34 @@ async def cli_interaction():
                     elif parts[1] == 'issues':
                         state = parts[3] if len(parts) > 3 else 'open'
                         result = await get_repository_issues(parts[2], state)
+                    elif parts[1] == 'prs':
+                        state = parts[3] if len(parts) > 3 else 'open'
+                        result = await get_pull_requests(parts[2], state)
+                    elif parts[1] == 'project':
+                        if len(parts) < 4:
+                            print("Uso: /github project <org> <number>")
+                            continue
+                        result = await get_project_info(parts[2], int(parts[3]))
+                    elif parts[1] == 'summarize':
+                        if len(parts) < 4:
+                            print("Uso: /github summarize <owner/repo> <issue_number>")
+                            continue
+                        result = await summarize_issue(parts[2], int(parts[3]))
                     elif parts[1] == 'search':
                         query = ' '.join(parts[2:])
                         language = None
                         if ' in:' in query:
                             query, language = query.split(' in:', 1)
                         result = await search_github_code(query, language)
-                
-                elif parts[0] == 'code':
-                    if len(parts) < 3:
-                        print("Uso: /code analyze <arquivo> [language]")
-                        continue
-                        
-                    if parts[1] == 'analyze':
-                        try:
-                            with open(parts[2], 'r') as f:
-                                content = f.read()
-                            language = parts[3] if len(parts) > 3 else 'python'
-                            result = await analyze_file_content(content, language)
-                            
-                            # Salvar análise na memória
-                            await add_memory(
-                                f"Análise do arquivo {parts[2]}:\n{result}",
-                                context_type="code_analysis"
-                            )
-                        except Exception as e:
-                            result = f"Erro ao analisar arquivo: {str(e)}"
-                
+                    
+                    # Salvar automaticamente na memória resultados relevantes
+                    if parts[1] in ['summarize', 'project']:
+                        await add_memory(
+                            result,
+                            context_type=f"github_{parts[1]}",
+                            metadata={"command": command, "timestamp": datetime.now().isoformat()}
+                        )
+
                 else:
                     result = "Comando desconhecido"
                 
