@@ -24,6 +24,9 @@ class DocSearchTool:
     def search_with_ai(self, query: str) -> str:
         """Use local Ollama model to provide documentation and explanations"""
         try:
+            print("🤖 Iniciando pesquisa com CodeLlama...")
+            print("⏳ Buscando documentação, por favor aguarde...")
+            
             # System message and query combined in the prompt
             prompt = f"""You are a documentation assistant specialized in programming and development. 
 When asked about technologies, libraries, or programming concepts, provide clear, concise explanations with relevant code examples.
@@ -40,6 +43,7 @@ Query: {query}"""
                 stream=False
             )
             
+            print("✅ Pesquisa concluída!")
             return response['message']['content'].strip()
         except Exception as e:
             logger.error(f"Error using AI search: {e}")
