@@ -1,12 +1,7 @@
-fastmcp>=1.0.0
 chromadb>=0.4.0
-GitPython>=3.1.44
+gitpython>=3.1.0
+fastmcp>=1.0.0
+PyGithub>=2.0.0
+tree-sitter>=0.20.0
+ollama>=0.4.8
 python-dotenv>=1.0.0
-anthropic>=0.5.0
-openai>=1.0.0
-PyGithub>=2.2.0
-tree-sitter>=0.20.4
-# Para análise de código
-pylint>=3.0.3
-black>=24.1.1
-openai>=0.28.0

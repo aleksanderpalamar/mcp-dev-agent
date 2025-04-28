@@ -2,9 +2,7 @@ import os
 import json
 from pathlib import Path
 from typing import Dict
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+import ollama
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,38 +12,46 @@ def load_agent_config() -> Dict:
     config_path = Path('.agent.json')
     if not config_path.exists():
         return {}
-
+    
     with open(config_path, 'r') as f:
         return json.load(f)
 
 class DocSearchTool:
     def __init__(self):
         self.config = load_agent_config()
-
+        self.model = "codellama" # Default model for documentation
+        
     def search_with_ai(self, query: str) -> str:
-        """Use AI to provide documentation and explanations"""
+        """Use local Ollama model to provide documentation and explanations"""
         try:
-            response = client.chat.completions.create(model="gpt-4-turbo-preview",
-            messages=[
-                {"role": "system", "content": """You are a documentation assistant specialized in programming and development. 
+            # System message and query combined in the prompt
+            prompt = f"""You are a documentation assistant specialized in programming and development. 
 When asked about technologies, libraries, or programming concepts, provide clear, concise explanations with relevant code examples.
-Focus on best practices and practical usage examples."""},
-                {"role": "user", "content": f"I need documentation/explanation about: {query}"}
-            ],
-            max_tokens=500,
-            temperature=0.3)
-            return response.choices[0].message.content.strip()
+Focus on best practices and practical usage examples.
+
+Query: {query}"""
+
+            response = ollama.chat(
+                model=self.model,
+                messages=[{
+                    'role': 'user',
+                    'content': prompt
+                }],
+                stream=False
+            )
+            
+            return response['message']['content'].strip()
         except Exception as e:
             logger.error(f"Error using AI search: {e}")
             return f"Error searching documentation: {str(e)}"
 
 async def search_docs(query: str) -> str:
-    """Search for documentation using AI."""
+    """Search for documentation using local AI model."""
     try:
         doc_tool = DocSearchTool()
         result = doc_tool.search_with_ai(query)
-        return f"Documentation Results:\n{result}"
-
+        return f"Documentation Results (using {doc_tool.model}):\n{result}"
+            
     except Exception as e:
         logger.error(f"Error searching documentation: {e}")
         return f"Error searching documentation: {str(e)}"

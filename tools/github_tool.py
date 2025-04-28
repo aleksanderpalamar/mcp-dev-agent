@@ -4,9 +4,7 @@ from typing import Dict, List, Optional
 from tree_sitter import Language, Parser
 import logging
 import base64
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+import ollama
 from datetime import datetime
 from .memory_tool import add_memory
 
@@ -16,6 +14,7 @@ class GithubTool:
     def __init__(self):
         self.gh = Github(os.getenv('GITHUB_TOKEN'))
         self._setup_parser()
+        self.model = "codellama" # Default model for code-related tasks
 
     def _setup_parser(self):
         """Setup tree-sitter parser for code analysis"""
@@ -117,15 +116,21 @@ class GithubTool:
         return imports
 
     def summarize_text(self, text: str) -> str:
-        """Use GPT to summarize text content"""
+        """Use local Ollama model to summarize text content"""
         try:
-            response = client.chat.completions.create(model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Você é um assistente especializado em resumir issues do GitHub. Mantenha os resumos concisos e relevantes."},
-                {"role": "user", "content": f"Resuma esta issue de forma concisa:\n\n{text}"}
-            ],
-            max_tokens=150)
-            return response.choices[0].message.content
+            prompt = """You are a specialized assistant for summarizing GitHub issues. Create concise, relevant summaries that capture the main points, proposed solutions, and key decisions.
+
+Issue to summarize:
+"""
+            response = ollama.chat(
+                model=self.model,
+                messages=[{
+                    'role': 'user',
+                    'content': prompt + text
+                }],
+                stream=False
+            )
+            return response['message']['content'].strip()
         except Exception as e:
             logger.error(f"Error summarizing text: {e}")
             return "Não foi possível gerar um resumo."

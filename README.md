@@ -5,11 +5,11 @@ A development agent based on the Model Context Protocol (MCP) that provides memo
 ## Features
 
 - 🧠 **Memory System**: Store and retrieve information using embeddings via ChromaDB
-- 📚 **Documentation Search**: Search through documentation files
+- 📚 **Documentation Search**: Search through documentation with AI assistance
 - 🔄 **Git Integration**: Query commit history and issues
 - 🔍 **Code Analysis**: Static code analysis using tree-sitter
 - 🌐 **GitHub Integration**: Search repositories, issues, pull requests, projects, and code
-- 💡 **AI Assistant**: Automatic issue summarization using GPT
+- 💡 **AI Assistant**: Local AI-powered features using Ollama
 - 💻 **CLI Interface**: Interactive command-line interface
 - 🌐 **Server Mode**: Server-Sent Events (SSE) support
 
@@ -21,34 +21,58 @@ A development agent based on the Model Context Protocol (MCP) that provides memo
 - FastMCP
 - PyGithub
 - tree-sitter
-- openai
+- Ollama (https://ollama.ai)
 
 ## Installation
 
-1. Clone the repository:
+1. Install Ollama following instructions at https://ollama.ai
+
+2. Pull required models:
+
+```bash
+ollama pull codellama
+ollama pull llama3
+ollama pull mistral
+```
+
+3. Clone the repository:
 
 ```bash
 git clone [repository-url]
 cd mcp-dev-agent
 ```
 
-2. Install dependencies:
+4. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configure environment variables (copy .env.example to .env):
+5. Configure environment variables (copy .env.example to .env):
 
 ```bash
 cp .env.example .env
-# Edit .env with your API keys:
-# - GITHUB_TOKEN
-# - OPENAI_API_KEY
-# - ANTHROPIC_API_KEY
 ```
 
-4. Set up code parsers:
+6. Get your GitHub Personal Access Token:
+
+   1. Go to GitHub.com and login to your account
+   2. Click on your profile picture → Settings
+   3. Scroll down to "Developer settings" (bottom of left sidebar)
+   4. Click on "Personal access tokens" → "Tokens (classic)"
+   5. Click "Generate new token" → "Generate new token (classic)"
+   6. Give your token a descriptive name in the "Note" field
+   7. Select the following scopes:
+      - `repo` (Full control of private repositories)
+      - `read:org` (Read organization data)
+   8. Click "Generate token"
+   9. IMPORTANT: Copy your token immediately! You won't be able to see it again.
+   10. Edit your .env file and set:
+       ```
+       GITHUB_TOKEN=your-token-here
+       ```
+
+7. Set up code parsers:
 
 ```bash
 python setup_parsers.py
@@ -159,19 +183,15 @@ The SSE server enables integration with other applications through the MCP proto
 
 ## AI Model Configuration
 
-The agent supports integration with Anthropic (Claude) and OpenAI (GPT-4 and GPT-3.5) AI models. To use these models, you need to:
+The agent uses Ollama's local models for AI features. The following models are configured:
 
-1. Set up environment variables:
+1. CodeLlama (default) - Optimized for code-related tasks
+2. Llama 2 - General purpose tasks
+3. Mistral - Alternative model for various tasks
 
-```bash
-export ANTHROPIC_API_KEY="your-anthropic-api-key"
-export OPENAI_API_KEY="your-openai-api-key"
-```
+The `.agent.json` file is already configured with:
 
-2. The `.agent.json` file is already configured with:
-
-- Claude-3 Opus as default model
-- GPT-4 Turbo and GPT-3.5 Turbo support
+- CodeLlama as default model
 - Response caching (24 hours)
 - Interaction logging
 
@@ -180,5 +200,15 @@ export OPENAI_API_KEY="your-openai-api-key"
 You can adjust model parameters by editing the `.agent.json` file:
 
 - `temperature`: Controls response creativity (0.0 to 1.0)
-- `max_tokens`: Maximum tokens per response
+- `context_window`: Maximum context length
 - `top_p`: Controls response diversity
+
+### Using Different Models
+
+Different features use specialized models:
+
+- Code documentation: CodeLlama
+- Issue summarization: CodeLlama
+- General queries: Llama 2
+
+No API keys required - all AI features run locally through Ollama!
