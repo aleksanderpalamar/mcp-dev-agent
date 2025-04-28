@@ -89,6 +89,7 @@ async def cli_interaction():
     print("  /github project <org> <number> - Ver informações do projeto")
     print("  /github summarize <owner/repo> <issue_number> - Resumir uma issue")
     print("  /github search <query> [language] - Buscar código no GitHub")
+    print("  /code analyze <file> [language] - Analisar estrutura do código (funções, classes, imports)")
     
     while True:
         try:
@@ -192,6 +193,37 @@ async def cli_interaction():
                             metadata={"command": command, "timestamp": datetime.now().isoformat()}
                         )
 
+                elif parts[0] == 'code':
+                    if len(parts) < 3:
+                        print("Uso: /code analyze <file> [language]")
+                        continue
+                    
+                    if parts[1] == 'analyze':
+                        file_path = parts[2]
+                        language = parts[3] if len(parts) > 3 else None
+                        
+                        try:
+                            with open(file_path, 'r') as f:
+                                content = f.read()
+                            
+                            # Inferir linguagem do arquivo se não especificada
+                            if not language:
+                                if file_path.endswith('.py'):
+                                    language = 'python'
+                                elif file_path.endswith('.js'):
+                                    language = 'javascript'
+                                elif file_path.endswith('.ts'):
+                                    language = 'typescript'
+                                else:
+                                    language = 'python'  # default
+                            
+                            result = await analyze_file_content(content, language)
+                        except FileNotFoundError:
+                            result = f"Erro: Arquivo '{file_path}' não encontrado"
+                        except Exception as e:
+                            result = f"Erro ao analisar arquivo: {str(e)}"
+                    else:
+                        result = "Subcomando desconhecido. Use: /code analyze <file> [language]"
                 else:
                     result = "Comando desconhecido"
                 

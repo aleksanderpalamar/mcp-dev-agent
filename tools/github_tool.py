@@ -104,6 +104,37 @@ Issue to summarize:
             logger.error(f"Error summarizing text: {e}")
             return "Não foi possível gerar um resumo."
 
+    def analyze_code_with_ai(self, content: str, language: str = 'python') -> str:
+        """Use Ollama to provide an intelligent analysis of the code"""
+        try:
+            print("🤖 Iniciando análise com CodeLlama...")
+            print("⏳ Analisando código, por favor aguarde...")
+            
+            prompt = f"""You are a code analysis expert. Analyze the following {language} code and provide:
+1. A high-level overview of what the code does
+2. Key components and their responsibilities
+3. Notable patterns or techniques used
+4. Potential improvements or best practices that could be applied
+5. Any security considerations if relevant
+
+Here's the code to analyze:
+
+{content}
+"""
+            response = ollama.chat(
+                model=self.model,
+                messages=[{
+                    'role': 'user',
+                    'content': prompt
+                }],
+                stream=False
+            )
+            print("✅ Análise concluída!")
+            return response['message']['content'].strip()
+        except Exception as e:
+            logger.error(f"Error analyzing code with AI: {e}")
+            return f"Erro ao analisar código: {str(e)}"
+
 async def get_repo_details(repo_name: str) -> str:
     """Get detailed information about a GitHub repository"""
     try:
@@ -156,20 +187,27 @@ URL: {issue.html_url}
         return f"Erro ao buscar issues: {str(e)}"
 
 async def analyze_file_content(content: str, language: str = "python") -> str:
-    """Analyze code content and provide insights"""
+    """Analyze code content and provide AI-powered insights"""
     try:
         tool = GithubTool()
+        
+        # Primeiro, obter a análise estrutural básica
         analysis = tool.analyze_code(content, language)
+        
+        # Em seguida, obter a análise profunda usando IA
+        ai_analysis = tool.analyze_code_with_ai(content, language)
+        
+        # Combinar os resultados
+        return f"""🤖 Análise de Código AI
 
-        if "error" in analysis:
-            return f"Error analyzing code: {analysis['error']}"
+{ai_analysis}
 
-        return f"""Code Analysis:
-Functions: {', '.join(analysis['functions'])}
-Classes: {', '.join(analysis['classes'])}
-Imports: {', '.join(analysis['imports'])}"""
+📊 Estrutura do Código:
+• Funções: {', '.join(analysis['functions'])}
+• Classes: {', '.join(analysis['classes'])}
+• Imports: {', '.join(analysis['imports'])}"""
     except Exception as e:
-        return f"Error analyzing code: {str(e)}"
+        return f"Erro ao analisar código: {str(e)}"
 
 async def search_github_code(query: str, language: Optional[str] = None) -> str:
     """Search for code in GitHub"""
