@@ -25,6 +25,49 @@ A development agent based on the Model Context Protocol (MCP) that provides memo
 
 ## Installation
 
+### Global Installation (Recommended)
+
+1. Install Ollama following instructions at https://ollama.ai
+
+2. Pull required models:
+
+```bash
+ollama pull codellama
+ollama pull llama3
+ollama pull mistral
+```
+
+3. Clone and install:
+
+For Windows:
+
+```bash
+git clone [repository-url]
+cd mcp-dev-agent
+.\install.bat
+```
+
+For Linux/MacOS:
+
+```bash
+git clone [repository-url]
+cd mcp-dev-agent
+./install.sh
+```
+
+This will:
+
+- Create a virtual environment
+- Install all dependencies
+- Configure the global command `mcp-dev-agent-cli`
+- Set up the required directory structure
+
+4. Configure your GitHub token in the .env file
+
+After installation, you can use the `mcp-dev-agent-cli` command from any git repository!
+
+### Manual Installation (Alternative)
+
 1. Install Ollama following instructions at https://ollama.ai
 
 2. Pull required models:
@@ -83,9 +126,21 @@ python setup_parsers.py
 
 ## Usage
 
-The agent can be run in two modes:
+### Global CLI
 
-### CLI Mode
+The MCP Dev Agent can be used from any git repository using the global command:
+
+```bash
+mcp-dev-agent-cli
+```
+
+This command will:
+
+- Automatically set up required directories in your project
+- Use the correct Python environment
+- Maintain proper context isolation between projects
+
+### Traditional CLI Mode
 
 ```bash
 python main.py --mode cli
@@ -115,7 +170,20 @@ Available commands:
 
 #### Code Analysis
 
-- `/code analyze <file> [language]` - Analyze code structure (functions, classes, imports)
+- `/code analyze <file> [language]` - Analyze code structure and provides:
+  - High-level overview of the code's purpose
+  - Key components and their responsibilities
+  - Notable patterns or techniques used
+  - Potential improvements and best practices
+  - Security considerations when relevant
+  - Structural analysis (functions, classes, imports)
+
+Example:
+
+```bash
+mcp-dev-agent-cli
+> /code analyze src/main.py
+```
 
 #### Documentation
 

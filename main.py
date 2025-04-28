@@ -1,3 +1,4 @@
+from datetime import datetime
 from mcp.server.fastmcp import FastMCP
 from tools.memory_tool import add_memory, get_memory, add_repo_memory, get_repo_memory
 from tools.doc_tool import search_docs
@@ -10,7 +11,8 @@ import argparse
 import asyncio
 import json
 import os
-from datetime import datetime
+import sys
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -35,16 +37,19 @@ def load_agent_config():
     
     return config
 
-# Configurar logging
-import logging
-logging.basicConfig(
-    level=os.getenv('LOG_LEVEL', 'INFO'),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/agent.log'),
-        logging.StreamHandler()
-    ]
-)
+def setup_logging():
+    """Configure logging to use current directory"""
+    current_dir = Path.cwd()
+    log_file = current_dir / 'logs' / 'agent.log'
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
 
 config = load_agent_config()
 mcp = FastMCP("pair_programming_agent", config=config)
@@ -245,6 +250,7 @@ async def cli_interaction():
             print(f"Erro: {str(e)}")
 
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser(description='MCP Development Agent')
     parser.add_argument('--mode', choices=['cli', 'server'], default='server',
                       help='Modo de operação (cli ou server)')

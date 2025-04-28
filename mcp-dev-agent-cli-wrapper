@@ -1,0 +1,3 @@
+#!/bin/bash
+INSTALL_DIR="/home/palamar/Projetos/mcp-dev-agent"
+"$INSTALL_DIR/venv/bin/python" "$INSTALL_DIR/mcp_cli.py" "$@"
