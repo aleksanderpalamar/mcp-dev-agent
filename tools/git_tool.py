@@ -67,8 +67,21 @@ async def get_commit_history(limit: int = 5) -> str:
 
 async def get_issues() -> str:
     """Get open issues from the repository."""
-    # Nota: Isso requer configuração adicional com GitHub/GitLab API
-    return "Para acessar issues, é necessário configurar a integração com GitHub/GitLab API"
+    tool = GitTool()
+    if not tool.repo:
+        return "Nenhum repositório git encontrado"
+    
+    # Tentar obter o remote origin URL para extrair o repo
+    try:
+        remote_url = tool.repo.remotes.origin.url
+        if 'github.com' in remote_url:
+            # Extrair owner/repo do GitHub URL
+            repo_path = remote_url.split('github.com/')[-1].replace('.git', '')
+            return f"Para ver as issues deste repositório, use o comando:\n/github issues {repo_path}"
+    except:
+        pass
+    
+    return "Para ver as issues, use o comando /github issues <owner/repo>"
 
 async def get_repo_info() -> str:
     """Get formatted repository information."""

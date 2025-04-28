@@ -54,23 +54,26 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-6. Get your GitHub Personal Access Token:
+## Setting up GitHub Token
 
-   1. Go to GitHub.com and login to your account
-   2. Click on your profile picture → Settings
-   3. Scroll down to "Developer settings" (bottom of left sidebar)
-   4. Click on "Personal access tokens" → "Tokens (classic)"
-   5. Click "Generate new token" → "Generate new token (classic)"
-   6. Give your token a descriptive name in the "Note" field
-   7. Select the following scopes:
-      - `repo` (Full control of private repositories)
-      - `read:org` (Read organization data)
-   8. Click "Generate token"
-   9. IMPORTANT: Copy your token immediately! You won't be able to see it again.
-   10. Edit your .env file and set:
-       ```
-       GITHUB_TOKEN=your-token-here
-       ```
+1. Go to [GitHub Personal Access Tokens](https://github.com/settings/tokens)
+2. Click "Generate new token (classic)"
+3. Give it a name (e.g., "MCP Dev Agent")
+4. Select these scopes:
+   - `repo` (Full control of repositories)
+   - `read:org` (Read organization info)
+5. Click "Generate token"
+6. **IMPORTANT**: Copy your token immediately! You won't see it again.
+7. Add it to your .env file:
+   ```bash
+   GITHUB_TOKEN=ghp_your_actual_token_here
+   ```
+8. Or set it in your environment:
+   ```bash
+   export GITHUB_TOKEN=ghp_your_actual_token_here
+   ```
+
+**Note**: Replace `ghp_your_actual_token_here` with the actual token you copied from GitHub.
 
 7. Set up code parsers:
 

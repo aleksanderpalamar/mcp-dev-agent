@@ -1,7 +1,7 @@
-from github import Github
+from github import Github, GithubException
 import os
 from typing import Dict, List, Optional
-from tree_sitter import Language, Parser
+from tree_sitter import Parser
 import logging
 import base64
 import ollama
@@ -13,106 +13,75 @@ logger = logging.getLogger(__name__)
 class GithubTool:
     def __init__(self):
         self.gh = Github(os.getenv('GITHUB_TOKEN'))
-        self._setup_parser()
+        self.parser = Parser()
         self.model = "codellama" # Default model for code-related tasks
 
-    def _setup_parser(self):
-        """Setup tree-sitter parser for code analysis"""
-        try:
-            Language.build_library(
-                'build/languages.so',
-                [
-                    'vendor/tree-sitter-python',
-                    'vendor/tree-sitter-javascript',
-                    'vendor/tree-sitter-typescript'
-                ]
-            )
-            self.PY_LANGUAGE = Language('build/languages.so', 'python')
-            self.JS_LANGUAGE = Language('build/languages.so', 'javascript')
-            self.TS_LANGUAGE = Language('build/languages.so', 'typescript')
-            self.parser = Parser()
-        except Exception as e:
-            logger.warning(f"Could not setup tree-sitter: {e}")
-            self.parser = None
-
     def analyze_code(self, content: str, language: str = 'python') -> Dict:
-        """Analyze code content using tree-sitter"""
-        if not self.parser:
-            return {"error": "Code analysis not available"}
-
+        """Analyze code content using basic parsing"""
         try:
-            if language == 'python':
-                self.parser.set_language(self.PY_LANGUAGE)
-            elif language == 'javascript':
-                self.parser.set_language(self.JS_LANGUAGE)
-            elif language == 'typescript':
-                self.parser.set_language(self.TS_LANGUAGE)
-            else:
-                return {"error": f"Language {language} not supported"}
-
-            tree = self.parser.parse(bytes(content, "utf8"))
-            return {
-                "functions": self._extract_functions(tree),
-                "classes": self._extract_classes(tree),
-                "imports": self._extract_imports(tree)
+            # Basic code analysis without tree-sitter language specifics
+            lines = content.split('\n')
+            analysis = {
+                "functions": self._find_functions(lines, language),
+                "classes": self._find_classes(lines, language),
+                "imports": self._find_imports(lines, language)
             }
+            return analysis
         except Exception as e:
             logger.error(f"Error analyzing code: {e}")
             return {"error": str(e)}
 
-    def _extract_functions(self, tree) -> List[str]:
-        """Extract function definitions from AST"""
+    def _find_functions(self, lines: List[str], language: str) -> List[str]:
+        """Find function definitions using basic text analysis"""
         functions = []
-        cursor = tree.walk()
-
-        def visit_function():
-            node = cursor.node
-            if node.type == "function_definition":
-                for child in node.children:
-                    if child.type == "identifier":
-                        functions.append(child.text.decode('utf8'))
-                return True
-            return False
-
-        while cursor.goto_first_child() or cursor.goto_next_sibling():
-            visit_function()
-
+        if language == 'python':
+            for line in lines:
+                if line.strip().startswith('def '):
+                    name = line.split('def ')[1].split('(')[0].strip()
+                    functions.append(name)
+        elif language in ['javascript', 'typescript']:
+            for line in lines:
+                line = line.strip()
+                if 'function ' in line or '=>' in line:
+                    if 'function ' in line:
+                        name = line.split('function ')[1].split('(')[0].strip()
+                        if name:
+                            functions.append(name)
+                    # Add basic support for arrow functions with names
+                    elif '=' in line and '=>' in line:
+                        name = line.split('=')[0].strip()
+                        if name:
+                            functions.append(name)
         return functions
 
-    def _extract_classes(self, tree) -> List[str]:
-        """Extract class definitions from AST"""
+    def _find_classes(self, lines: List[str], language: str) -> List[str]:
+        """Find class definitions using basic text analysis"""
         classes = []
-        cursor = tree.walk()
-
-        def visit_class():
-            node = cursor.node
-            if node.type == "class_definition":
-                for child in node.children:
-                    if child.type == "identifier":
-                        classes.append(child.text.decode('utf8'))
-                return True
-            return False
-
-        while cursor.goto_first_child() or cursor.goto_next_sibling():
-            visit_class()
-
+        if language == 'python':
+            for line in lines:
+                if line.strip().startswith('class '):
+                    name = line.split('class ')[1].split('(')[0].split(':')[0].strip()
+                    classes.append(name)
+        elif language in ['javascript', 'typescript']:
+            for line in lines:
+                if line.strip().startswith('class '):
+                    name = line.split('class ')[1].split('{')[0].split('extends')[0].strip()
+                    classes.append(name)
         return classes
 
-    def _extract_imports(self, tree) -> List[str]:
-        """Extract imports from AST"""
+    def _find_imports(self, lines: List[str], language: str) -> List[str]:
+        """Find imports using basic text analysis"""
         imports = []
-        cursor = tree.walk()
-
-        def visit_import():
-            node = cursor.node
-            if node.type in ["import_statement", "import_from_statement"]:
-                imports.append(node.text.decode('utf8'))
-                return True
-            return False
-
-        while cursor.goto_first_child() or cursor.goto_next_sibling():
-            visit_import()
-
+        if language == 'python':
+            for line in lines:
+                line = line.strip()
+                if line.startswith('import ') or line.startswith('from '):
+                    imports.append(line)
+        elif language in ['javascript', 'typescript']:
+            for line in lines:
+                line = line.strip()
+                if line.startswith('import ') or line.startswith('require('):
+                    imports.append(line)
         return imports
 
     def summarize_text(self, text: str) -> str:
@@ -168,16 +137,23 @@ async def get_repository_issues(repo_name: str, state: str = "open") -> str:
         issues = repo.get_issues(state=state)
 
         result = []
+        result.append(f"\nIssues do repositório {repo_name} ({state}):\n")
+        
         for issue in issues[:10]:  # Limitar a 10 issues para não sobrecarregar
-            result.append(f"""#{issue.number} - {issue.title}
-State: {issue.state}
-Created: {issue.created_at}
+            result.append(f"""📎 Issue #{issue.number}
+Título: {issue.title}
+Status: {issue.state}
+Criado em: {issue.created_at.strftime('%d/%m/%Y')}
 Labels: {', '.join([label.name for label in issue.labels])}
+URL: {issue.html_url}
 """)
 
-        return "\n---\n".join(result) if result else "No issues found"
+        if not result[1:]:  # Se não há issues (apenas o cabeçalho)
+            return f"Nenhuma issue encontrada no repositório {repo_name} com status '{state}'"
+            
+        return "\n---\n".join(result)
     except Exception as e:
-        return f"Error getting issues: {str(e)}"
+        return f"Erro ao buscar issues: {str(e)}"
 
 async def analyze_file_content(content: str, language: str = "python") -> str:
     """Analyze code content and provide insights"""
@@ -273,7 +249,13 @@ async def summarize_issue(repo_name: str, issue_number: int) -> str:
     try:
         tool = GithubTool()
         repo = tool.gh.get_repo(repo_name)
-        issue = repo.get_issue(issue_number)
+        
+        try:
+            issue = repo.get_issue(issue_number)
+        except GithubException as e:
+            if e.status == 404:
+                return f"Issue #{issue_number} não encontrada no repositório {repo_name}"
+            raise e
 
         # Preparar o contexto completo da issue
         comments = [comment.body for comment in issue.get_comments()]
@@ -283,7 +265,7 @@ Descrição: {issue.body}
 Comentários:
 {chr(10).join(f'- {comment}' for comment in comments)}"""
 
-        # Gerar resumo usando GPT
+        # Gerar resumo usando modelo local
         summary = tool.summarize_text(full_context)
 
         # Salvar o resumo na memória
@@ -308,5 +290,6 @@ Autor: {issue.user.login}
 Criado em: {issue.created_at}
 Labels: {', '.join(label.name for label in issue.labels)}
 URL: {issue.html_url}"""
+        
     except Exception as e:
         return f"Erro ao resumir issue: {str(e)}"
