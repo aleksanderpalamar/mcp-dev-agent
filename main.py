@@ -15,9 +15,102 @@ import sys
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
+import uuid
+import git
+from rich.console import Console
+from rich.panel import Panel
+from rich.box import SQUARE
+from rich.text import Text
 
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
+
+console = Console()
+
+def print_result(result):
+    """Print command result with border"""
+    if result:
+        if isinstance(result, (list, dict)):
+            result = json.dumps(result, indent=2, ensure_ascii=False)
+        console.print(Panel(str(result), box=SQUARE))
+    console.print()
+
+def get_git_info():
+    """Get git branch and status"""
+    try:
+        repo = git.Repo(os.getcwd())
+        branch = repo.active_branch.name
+        changes = len(repo.index.diff(None)) + len(repo.untracked_files)
+        return f"git:({branch})±{changes}" if changes > 0 else f"git:({branch})"
+    except:
+        return ""
+
+def print_cli_header():
+    """Print CLI header with rich formatting"""
+    # Get virtual env name
+    venv = os.environ.get('VIRTUAL_ENV')
+    if venv:
+        venv = os.path.basename(venv)
+    
+    # Get current directory
+    current_dir = os.path.basename(os.getcwd())
+    
+    # Get git info
+    git_info = get_git_info()
+    
+    # Print header line with dim style
+    if venv:
+        console.print(f"{venv} ~/{current_dir} {git_info}", style="dim")
+    
+    # Print title in box using rich Panel
+    title = Text("MCP Dev Agent (research preview) v0.1.0", style="white")
+    console.print(Panel(title, box=SQUARE))
+    console.print()
+    
+    # Session info with proper formatting
+    session_id = str(uuid.uuid4())[:8] + "-" + str(uuid.uuid4())[:4] + "-" + str(uuid.uuid4())[:4] + "-" + str(uuid.uuid4())[:4] + "-"
+    workdir = os.getcwd()
+    console.print(f"localhost session: {session_id}")
+    
+    # Print info with proper indentation using dim style for the L symbols
+    console.print(Text("└", style="dim") + f" workdir: {workdir}")
+    console.print(Text("└", style="dim") + " model: codellama")
+    console.print()
+
+def print_help():
+    """Print help information about available commands"""
+    help_text = """
+🔥 MCP Dev Agent - Comandos Disponíveis
+
+🧠 Comandos de Memória:
+  /memory add <conteúdo>         - Adicionar nova memória geral
+  /memory get <consulta>         - Buscar memórias existentes
+  /memory repo add <conteúdo>    - Adicionar memória específica do repositório
+  /memory repo get <consulta>    - Buscar memórias do repositório
+
+🔄 Comandos Git:
+  /git commits [número]          - Mostrar histórico de commits (padrão: últimos 5)
+  /git issues                    - Listar issues do repositório local
+  /git info                      - Mostrar informações detalhadas do repositório
+  /git diff                      - Mostrar mudanças pendentes (staged e unstaged)
+
+🌐 Comandos GitHub:
+  /github repo <owner/repo>      - Mostrar detalhes do repositório
+  /github issues <owner/repo>    - Listar issues (state: open/closed)
+  /github prs <owner/repo>       - Listar pull requests (state: open/closed)
+  /github project <org> <number> - Mostrar informações do projeto
+  /github summarize <owner/repo> - Gerar resumo da issue usando GPT
+  /github search <query>         - Buscar código no GitHub
+
+💻 Análise de Código e Documentação:
+  /code analyze <file>           - Analisar estrutura do código
+  /docs <query>                  - Buscar documentação
+
+⚡ Outros Comandos:
+  /help                          - Mostrar esta mensagem de ajuda
+  exit                           - Sair do CLI
+"""
+    print(help_text)
 
 def load_agent_config():
     """Load agent configuration from .agent.json"""
@@ -77,38 +170,57 @@ mcp.add_tool(get_project_info)
 mcp.add_tool(summarize_issue)
 
 async def cli_interaction():
-    print("CLI Mode - Digite 'exit' para sair")
-    print("Comandos disponíveis:")
-    print("  /memory add <conteúdo> - Adicionar memória")
-    print("  /memory get <consulta> - Buscar memória")
-    print("  /memory repo add <conteúdo> - Adicionar memória do repositório")
-    print("  /memory repo get <consulta> - Buscar memória do repositório")
-    print("  /docs <consulta> - Buscar documentação")
-    print("  /git commits [número] - Ver histórico de commits")
-    print("  /git issues - Ver issues")
-    print("  /git info - Ver informações do repositório")
-    print("  /git diff - Ver alterações pendentes")
-    print("  /github repo <owner/repo> - Ver detalhes do repositório")
-    print("  /github issues <owner/repo> [state] - Listar issues (state: open/closed)")
-    print("  /github prs <owner/repo> [state] - Listar pull requests (state: open/closed)")
-    print("  /github project <org> <number> - Ver informações do projeto")
-    print("  /github summarize <owner/repo> <issue_number> - Resumir uma issue")
-    print("  /github search <query> [language] - Buscar código no GitHub")
-    print("  /code analyze <file> [language] - Analisar estrutura do código (funções, classes, imports)")
+    """Interactive CLI with modern UI"""
+    print_cli_header()
     
     while True:
         try:
-            command = input("\nDigite seu comando: ").strip()
+            command = input("> ").strip()
             
             if command.lower() == 'exit':
                 break
-                
+            
             if command.startswith('/'):
                 parts = command[1:].split()
                 if not parts:
                     continue
 
-                if parts[0] == 'memory':
+                if parts[0] == 'help':
+                    print_help()
+                    continue
+
+                if parts[0] == 'docs':
+                    if len(parts) < 2:
+                        print("Uso: /docs <consulta>")
+                        continue
+                    query = ' '.join(parts[1:])
+                    result = await search_docs(query)
+                    print_result(result)
+                    continue
+                
+                elif parts[0] == 'git':
+                    if len(parts) < 2:
+                        print("Uso: /git [commits|issues|info|diff]")
+                        continue
+                    if parts[1] == 'commits':
+                        limit = int(parts[2]) if len(parts) > 2 else 5
+                        result = await get_commit_history(limit)
+                        print_result(result)
+                        continue
+                    elif parts[1] == 'issues':
+                        result = await get_issues()
+                        print_result(result)
+                        continue
+                    elif parts[1] == 'info':
+                        result = await get_repo_info()
+                        print_result(result)
+                        continue
+                    elif parts[1] == 'diff':
+                        result = await get_diffs()
+                        print_result(result)
+                        continue
+
+                elif parts[0] == 'memory':
                     if len(parts) < 2:
                         print("Uso: /memory [add|get|repo] <conteúdo>")
                         continue
@@ -129,37 +241,24 @@ async def cli_interaction():
                                 elif line.startswith('Last Commit:'):
                                     git_context['last_commit'] = line.split(': ')[1].split(' ')[0]
                             result = await add_repo_memory(content, git_context)
+                            print_result(result)
+                            continue
                         elif parts[2] == 'get':
                             query = ' '.join(parts[3:])
                             result = await get_repo_memory(query)
+                            print_result(result)
+                            continue
                     elif parts[1] == 'add':
                         content = ' '.join(parts[2:])
                         result = await add_memory(content)
+                        print_result(result)
+                        continue
                     elif parts[1] == 'get':
                         query = ' '.join(parts[2:])
                         result = await get_memory(query)
-                
-                elif parts[0] == 'docs':
-                    if len(parts) < 2:
-                        print("Uso: /docs <consulta>")
+                        print_result(result)
                         continue
-                    query = ' '.join(parts[1:])
-                    result = await search_docs(query)
-                
-                elif parts[0] == 'git':
-                    if len(parts) < 2:
-                        print("Uso: /git [commits|issues|info|diff]")
-                        continue
-                    if parts[1] == 'commits':
-                        limit = int(parts[2]) if len(parts) > 2 else 5
-                        result = await get_commit_history(limit)
-                    elif parts[1] == 'issues':
-                        result = await get_issues()
-                    elif parts[1] == 'info':
-                        result = await get_repo_info()
-                    elif parts[1] == 'diff':
-                        result = await get_diffs()
-                
+
                 elif parts[0] == 'github':
                     if len(parts) < 3:
                         print("Uso: /github [repo|issues|prs|project|summarize|search] <args>")
@@ -167,22 +266,32 @@ async def cli_interaction():
                         
                     if parts[1] == 'repo':
                         result = await get_repo_details(parts[2])
+                        print_result(result)
+                        continue
                     elif parts[1] == 'issues':
                         state = parts[3] if len(parts) > 3 else 'open'
                         result = await get_repository_issues(parts[2], state)
+                        print_result(result)
+                        continue
                     elif parts[1] == 'prs':
                         state = parts[3] if len(parts) > 3 else 'open'
                         result = await get_pull_requests(parts[2], state)
+                        print_result(result)
+                        continue
                     elif parts[1] == 'project':
                         if len(parts) < 4:
                             print("Uso: /github project <org> <number>")
                             continue
                         result = await get_project_info(parts[2], int(parts[3]))
+                        print_result(result)
+                        continue
                     elif parts[1] == 'summarize':
                         if len(parts) < 4:
                             print("Uso: /github summarize <owner/repo> <issue_number>")
                             continue
                         result = await summarize_issue(parts[2], int(parts[3]))
+                        print_result(result)
+                        continue
                     elif parts[1] == 'search':
                         query = ' '.join(parts[2:])
                         language = None
@@ -227,24 +336,21 @@ async def cli_interaction():
                             result = f"Erro: Arquivo '{file_path}' não encontrado"
                         except Exception as e:
                             result = f"Erro ao analisar arquivo: {str(e)}"
+                        print_result(result)
+                        continue
                     else:
                         result = "Subcomando desconhecido. Use: /code analyze <file> [language]"
+                        print_result(result)
+                        continue
                 else:
-                    result = "Comando desconhecido"
-                
-                print(result)
-                
-                # Se houver alterações no git, salvar automaticamente na memória
-                if parts[0] == 'git' and parts[1] in ['info', 'diff']:
-                    git_info = await get_repo_info()
-                    if 'modified files' in git_info or 'staged changes' in git_info:
-                        diff_info = await get_diffs()
-                        await add_repo_memory(
-                            f"Estado do repositório:\n{git_info}\n\nMudanças:\n{diff_info}",
-                            {}
-                        )
+                    print("Comando desconhecido. Use /help para ver os comandos disponíveis.")
             else:
-                print("Comandos devem começar com '/'")
+                print("Por favor, use comandos que começam com /")
+                
+            # Ask if user wants to continue
+            continue_response = input("Continue to iterate? (y/n): ").strip().lower()
+            if continue_response != 'y':
+                break
                 
         except Exception as e:
             print(f"Erro: {str(e)}")

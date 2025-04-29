@@ -2,6 +2,8 @@
 
 A development agent based on the Model Context Protocol (MCP) that provides memory management, documentation search, and Git/GitHub integration features, available both as a CLI tool and as an SSE server.
 
+![MCP Dev Agent](.github/workflows/mcp-dev-agent-cli.png)
+
 ## Features
 
 - 🧠 **Memory System**: Store and retrieve information using embeddings via ChromaDB

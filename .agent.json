@@ -18,7 +18,7 @@
                 "top_p": 0.9
             }
         },
-        "llama2": {
+        "llama3": {
             "provider": "ollama",
             "model": "llama3",
             "parameters": {

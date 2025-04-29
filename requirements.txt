@@ -5,3 +5,5 @@ PyGithub>=2.0.0
 tree-sitter>=0.20.0
 ollama>=0.4.8
 python-dotenv>=1.0.0
+rich>=14.0.0
+prompt_toolkit>=3.0.51
