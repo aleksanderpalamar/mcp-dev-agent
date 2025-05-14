@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/aleksanderpalamar-mcp-dev-agent-badge.png)](https://mseep.ai/app/aleksanderpalamar-mcp-dev-agent)
+
 # MCP Development Agent
 
 A development agent based on the Model Context Protocol (MCP) that provides memory management, documentation search, and Git/GitHub integration features, available both as a CLI tool and as an SSE server.
